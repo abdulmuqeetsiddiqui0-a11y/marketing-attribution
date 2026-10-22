@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marketing-to-Revenue Attribution</title>
+<style>
+:root{--ink:#12202C;--mute:#5B6B7A;--paper:#F4F6F8;--card:#fff;--line:#D5DCE3;--keep:#0F6E6E;--leak:#C8323F;--leakbg:#FBE9EB;--keepbg:#E2F1F0;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--sans)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{padding:48px 0 28px}
+h1{font:600 clamp(30px,5vw,48px)/1.1 var(--serif);margin:0 0 14px;max-width:18ch;letter-spacing:-.01em}
+h2{font:600 26px/1.2 var(--serif);margin:0 0 6px}
+.lede{max-width:62ch;color:var(--mute);margin:0}
+section{padding:36px 0;border-top:1px solid var(--line)}
+section p.sub{color:var(--mute);margin:0 0 20px;max-width:64ch}
+.kpis{display:flex;flex-wrap:wrap;gap:0;margin-top:28px;border:1px solid var(--line);background:var(--card)}
+.kpi{flex:1 1 150px;padding:14px 16px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kpi b{display:block;font:600 24px var(--serif);font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--mute)}
+.kpi.bad b{color:var(--leak)}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+label{font-size:14px;color:var(--mute)}
+select,button{font:inherit;font-size:14px;padding:7px 12px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:4px;cursor:pointer}
+button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+:focus-visible{outline:3px solid #2F80ED;outline-offset:2px}
+.funnel{background:var(--card);border:1px solid var(--line);padding:6px 18px}
+.row{display:grid;grid-template-columns:170px 1fr 230px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row .nm{font-weight:600;font-size:15px}
+.row .nm small{display:block;font-weight:400;color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.track{height:26px;background:#EAEFF3;position:relative}
+.fill{height:100%;background:var(--keep);transition:width .5s}
+.row.worst{background:var(--leakbg);margin:0 -18px;padding:12px 18px}
+.chip{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.chip b{color:var(--leak)}
+.tag{display:inline-block;background:var(--leak);color:#fff;font-size:12px;padding:1px 7px;margin-left:6px;border-radius:2px}
+.note{font-size:13px;color:var(--mute);margin-top:10px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;background:#EEF2F5}
+.tw{overflow-x:auto}
+.pair{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.pair i{display:block;height:7px}
+.pair .l{background:#9AA8B5}.pair .r{background:var(--keep)}
+td.gap.neg{color:var(--leak);font-weight:600}td.gap.pos{color:var(--keep);font-weight:600}
+.legend{font-size:13px;color:var(--mute);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;margin:0 4px 0 12px;vertical-align:-1px}
+.insights{display:grid;gap:12px}
+.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--keep);padding:14px 16px}
+.ins.warn{border-left-color:var(--leak)}
+.ins b{display:block;margin-bottom:2px}
+.ins p{margin:0;color:var(--mute);font-size:15px}
+.j{background:var(--card);border:1px solid var(--line);padding:12px 14px;margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start}
+.t{border:1px solid var(--line);padding:5px 9px;font-size:13px;min-width:92px}
+.t em{display:block;font-style:normal;font-weight:600;color:var(--keep);font-size:15px;font-variant-numeric:tabular-nums}
+.t small{color:var(--mute)}
+.jv{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+ol.steps{padding-left:20px;margin:0;display:grid;gap:8px;max-width:70ch}
+ol.steps b{font-weight:600}
+footer{padding:28px 0 48px;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+code{background:#E6EBF0;padding:1px 5px;font-size:13px}
+@media(max-width:720px){.row{grid-template-columns:1fr}.row.worst{margin:0 -18px}}
+@media(prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Where the funnel loses its money</h1>
+  <p class="lede">Management sees high lead volume but slow revenue growth. This system rebuilds every customer journey, from first ad exposure to closed revenue, shows which stage and which channel lose the most value, and recommends where to act.</p>
+  <div class="kpis" id="kpis"></div>
+</header>
+
+<section>
+  <h2>Funnel leakage</h2>
+  <p class="sub">Each bar shows how many people reach a stage. The red marker is the stage where the gap to the industry benchmark costs the most revenue.</p>
+  <div class="bar"><label for="chSel">Channel of first touch</label><select id="chSel"></select></div>
+  <div class="funnel" id="funnel"></div>
+  <p class="note">Bar lengths use a log scale because exposures outnumber deals by about 10,000 to 1.</p>
+</section>
+
+<section>
+  <h2>Who really earns the revenue</h2>
+  <p class="sub">The same sales can be credited to different channels depending on the attribution model. Switch the model to see how the ranking changes.</p>
+  <div class="bar" id="models" role="group" aria-label="Attribution model"></div>
+  <div class="tw"><table id="tbl"></table></div>
+  <p class="legend"><i style="background:#9AA8B5"></i>Share of leads<i style="background:var(--keep)"></i>Share of revenue</p>
+</section>
+
+<section>
+  <h2>What the AI found</h2>
+  <p class="sub">Findings are generated from the data above, so they update when the data changes.</p>
+  <div class="insights" id="insights"></div>
+</section>
+
+<section>
+  <h2>Sample customer journeys</h2>
+  <p class="sub">Each card is one closed deal. The percentage under each touchpoint is the share of that deal's revenue credited to it under the selected model.</p>
+  <div id="journeys"></div>
+</section>
+
+<section>
+  <h2>How the system works</h2>
+  <ol class="steps">
+    <li><b>Collect.</b> Ad platforms, web analytics, CRM and billing feed one dataset.</li>
+    <li><b>Stitch identities.</b> UTM tags, cookies and email addresses link anonymous visits to a named lead.</li>
+    <li><b>Rebuild journeys.</b> Every touchpoint is ordered in time, from first exposure to payment.</li>
+    <li><b>Attribute revenue.</b> Five models share each deal's value across its touchpoints. The data-driven model measures how much conversion drops when a channel is removed (Markov chain).</li>
+    <li><b>Detect leaks.</b> Stage conversion is compared with benchmarks, and each channel's share of leads is compared with its share of revenue.</li>
+    <li><b>Recommend.</b> The largest recoverable gaps are ranked in rupees.</li>
+  </ol>
+</section>
+
+<footer>
+  Data on this page is simulated (8,000 leads, fixed random seed) to demonstrate the method. To use real data, replace the <code>makeJourneys()</code> function in this file with rows loaded from your CRM export.
+</footer>
+</div>
+
+<script>
+const CH=[
+ {n:'Paid Social',w:.26,nw:.10,q:.22,cpl:900,ctr:.012,v2l:.03},
+ {n:'Display',w:.16,nw:.12,q:.15,cpl:600,ctr:.004,v2l:.025},
+ {n:'Paid Search',w:.20,nw:.15,q:.55,cpl:1800,ctr:.035,v2l:.045},
+ {n:'Organic Search',w:.12,nw:.20,q:.70,cpl:500,ctr:.03,v2l:.05},
+ {n:'Email',w:.08,nw:.25,q:.75,cpl:300,ctr:.04,v2l:.06},
+ {n:'Webinars',w:.06,nw:.12,q:.80,cpl:2600,ctr:.02,v2l:.12},
+ {n:'Referral',w:.07,nw:.03,q:1.0,cpl:700,ctr:.05,v2l:.08},
+ {n:'Events',w:.05,nw:.03,q:.85,cpl:6500,ctr:.03,v2l:.15}
+];
+const STAGES=['Campaign exposure','Site visit','Lead','Marketing-qualified','Sales-qualified','Opportunity','Closed-won'];
+const BENCH=[.01,.04,.50,.45,.45,.25];
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const R=rng(42);
+const pickIdx=ws=>{let r=R()*ws.reduce((a,b)=>a+b);for(let i=0;i<ws.length;i++){r-=ws[i];if(r<=0)return i}return ws.length-1};
+
+function makeJourneys(N){
+  const out=[];
+  for(let i=0;i<N;i++){
+    const k=1+(R()<.55)+(R()<.35)+(R()<.2)+(R()<.1);
+    const t=[pickIdx(CH.map(c=>c.w))];
+    for(let x=1;x<k;x++){let c=pickIdx(CH.map(c=>c.nw));if(c===t[x-1])c=pickIdx(CH.map(c=>c.nw));t.push(c)}
+    let d=10+R()*50;const days=[d];
+    for(let x=1;x<k;x++){d=Math.max(.5,d*(.25+R()*.6));days.push(d)}
+    const lq=Math.min(1,Math.max(.05,t.reduce((s,c)=>s+CH[c].q,0)/k+.04*(k-1)));
+    const m=R()<.1+.5*lq, s=m&&R()<.2+.3*lq, o=s&&R()<.3+.3*lq, w=o&&R()<.12+.3*lq;
+    out.push({t,days,m,s,o,w,val:w?Math.round(60000*(.5+R()*R()*5)/1000)*1000:0});
+  }
+  return out;
+}
+const J=makeJourneys(8000);
+
+const fN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?Math.round(n/1e3)+'K':n>=1e3?(n/1e3).toFixed(1)+'K':Math.round(n)+'';
+const fR=v=>v>=1e7?'₹'+(v/1e7).toFixed(2)+' Cr':v>=1e5?'₹'+(v/1e5).toFixed(1)+' L':'₹'+Math.round(v).toLocaleString('en-IN');
+const pc=(x,d=1)=>(x*100).toFixed(d)+'%';
+
+function funnel(ci){
+  const js=ci<0?J:J.filter(j=>j.t[0]===ci);
+  const leads=js.length,mql=js.filter(j=>j.m).length,sql=js.filter(j=>j.s).length,opp=js.filter(j=>j.o).length,won=js.filter(j=>j.w).length;
+  const rev=js.reduce((s,j)=>s+j.val,0);
+  let vis=0;
+  for(const j of js)vis+=1/CH[j.t[0]].v2l;
+  let exp=0;
+  for(const j of js)exp+=1/(CH[j.t[0]].v2l*CH[j.t[0]].ctr);
+  return {c:[exp,vis,leads,mql,sql,opp,won],rev,deal:won?rev/won:0};
+}
+const F=funnel(-1);
+
+function leaks(f){
+  const r=f.c.slice(1).map((v,i)=>v/f.c[i]);
+  return r.map((rt,i)=>{
+    let down=1;for(let j=i+1;j<r.length;j++)down*=r[j];
+    const lostDeals=Math.max(0,(BENCH[i]-rt)*f.c[i]*down);
+    return {i,rt,lostDeals,lostRev:lostDeals*f.deal};
+  });
+}
+
+/* ---- attribution ---- */
+const NS=CH.length,START=NS,CONV=NS+1,NUL=NS+2;
+const T=Array.from({length:NS+3},()=>Array(NS+3).fill(0));
+for(const j of J){let p=START;for(const c of j.t){T[p][c]++;p=c}T[p][j.w?CONV:NUL]++}
+function convProb(rem){
+  const p=Array(NS+3).fill(0);p[CONV]=1;
+  for(let it=0;it<120;it++)for(let s=0;s<=START;s++){
+    if(s===rem){p[s]=0;continue}
+    const tot=T[s].reduce((a,b)=>a+b);
+    if(tot)p[s]=T[s].reduce((a,v,t)=>a+v*p[t],0)/tot;
+  }
+  return p[START];
+}
+const base=convProb(-1);
+const RE=CH.map((_,c)=>(base-convProb(c))/base);
+
+function weights(j,model){
+  const k=j.t.length;
+  if(model==='first')return j.t.map((_,i)=>i===0?1:0);
+  if(model==='last')return j.t.map((_,i)=>i===k-1?1:0);
+  if(model==='linear')return j.t.map(()=>1/k);
+  let w;
+  if(model==='decay'){const dl=j.days[k-1];w=j.days.map(d=>Math.pow(2,-(d-dl)/7))}
+  else w=j.t.map(c=>RE[c]);
+  const s=w.reduce((a,b)=>a+b);return w.map(x=>x/s);
+}
+function attribute(model){
+  const rev=Array(NS).fill(0);
+  for(const j of J){if(!j.w)continue;const w=weights(j,model);j.t.forEach((c,i)=>rev[c]+=j.val*w[i])}
+  return rev;
+}
+const MODELS=[['first','First touch'],['last','Last touch'],['linear','Linear'],['decay','Time decay'],['markov','Data-driven']];
+const AT={};MODELS.forEach(([k])=>AT[k]=attribute(k));
+const leadsBy=CH.map((_,c)=>J.filter(j=>j.t[0]===c).length);
+const involved=CH.map((_,c)=>J.filter(j=>j.t.includes(c)).length);
+const spend=CH.map((c,i)=>involved[i]*c.cpl*.6);
+
+/* ---- render ---- */
+let model='markov';
+const $=id=>document.getElementById(id);
+
+function renderKpis(){
+  const L=leaks(F),worst=L.reduce((a,b)=>b.lostRev>a.lostRev?b:a);
+  $('kpis').innerHTML=[
+    [fN(F.c[2]),'leads created',''],
+    [fN(F.c[6]),'deals won',''],
+    [pc(F.c[6]/F.c[2]),'lead-to-deal rate','bad'],
+    [fR(F.rev),'revenue',''],
+    [fR(worst.lostRev),'recoverable at one stage','bad']
+  ].map(k=>`<div class="kpi ${k[2]}"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
+}
+
+function renderFunnel(){
+  const ci=+$('chSel').value,f=funnel(ci),L=leaks(f);
+  const worst=L.reduce((a,b)=>b.lostRev>a.lostRev?b:a);
+  const mx=Math.log10(Math.max(f.c[0],10)+1);
+  $('funnel').innerHTML=f.c.map((v,i)=>{
+    const w=Math.max(1,Math.log10(v+1)/mx*100);
+    let chip='<span class="chip">Entry point</span>';
+    if(i>0){
+      const l=L[i-1],drop=1-l.rt,isW=worst.i===i-1&&worst.lostRev>0;
+      chip=`<span class="chip">${pc(l.rt)} continue · <b>${pc(drop)} lost</b>${l.lostRev>0?`<br>${fR(l.lostRev)} below benchmark`:'<br>At or above benchmark'}${isW?'<span class="tag">Biggest leak</span>':''}</span>`;
+    }
+    const isW=i>0&&worst.i===i-1&&worst.lostRev>0;
+    return `<div class="row${isW?' worst':''}"><div class="nm">${STAGES[i]}<small>${fN(v)}</small></div><div class="track"><div class="fill" style="width:${w}%;${isW?'background:var(--leak)':''}"></div></div>${chip}</div>`;
+  }).join('');
+}
+
+function renderTable(){
+  const rev=AT[model],tr=rev.reduce((a,b)=>a+b),tl=J.length;
+  const rows=CH.map((c,i)=>({c,i,ls:leadsBy[i]/tl,rs:rev[i]/tr,rev:rev[i],won:J.filter(j=>j.t[0]===i&&j.w).length})).sort((a,b)=>b.ls-a.ls);
+  $('tbl').innerHTML=`<tr><th>Channel</th><th>Leads (first touch)</th><th>Lead-to-deal</th><th>Revenue credit</th><th>Lead vs revenue share</th><th>Gap</th><th>Return on spend</th></tr>`+
+  rows.map(r=>{const g=(r.rs-r.ls)*100;
+    return `<tr><td>${r.c.n}</td><td>${fN(leadsBy[r.i])}</td><td>${pc(r.won/leadsBy[r.i])}</td><td>${fR(r.rev)}</td><td><div class="pair"><i class="l" style="width:${r.ls*300}px"></i><i class="r" style="width:${r.rs*300}px"></i></div></td><td class="gap ${g<0?'neg':'pos'}">${g>0?'+':''}${g.toFixed(1)} pts</td><td>${(r.rev/spend[r.i]).toFixed(1)}×</td></tr>`}).join('');
+}
+
+function renderModels(){
+  $('models').innerHTML=MODELS.map(([k,l])=>`<button aria-pressed="${k===model}" data-m="${k}">${l}</button>`).join('');
+  $('models').querySelectorAll('button').forEach(b=>b.onclick=()=>{model=b.dataset.m;renderModels();renderTable();renderJourneys()});
+}
+
+function renderInsights(){
+  const L=leaks(F),worst=L.reduce((a,b)=>b.lostRev>a.lostRev?b:a);
+  const tr=AT.markov.reduce((a,b)=>a+b);
+  const gaps=CH.map((c,i)=>({n:c.n,ls:leadsBy[i]/J.length,rs:AT.markov[i]/tr,roas:AT.markov[i]/spend[i],i}));
+  const over=gaps.reduce((a,b)=>(b.ls-b.rs)>(a.ls-a.rs)?b:a);
+  const top=gaps.reduce((a,b)=>b.roas>a.roas?b:a);
+  const lastBias=CH.map((c,i)=>({n:c.n,d:(AT.last[i]-AT.markov[i])/tr})).reduce((a,b)=>b.d>a.d?b:a);
+  const firstBias=CH.map((c,i)=>({n:c.n,d:(AT.markov[i]-AT.first[i])/tr})).reduce((a,b)=>b.d>a.d?b:a);
+  const lowQ=CH.map((c,i)=>({n:c.n,r:J.filter(j=>j.t[0]===i&&j.w).length/leadsBy[i]})).sort((a,b)=>a.r-b.r).slice(0,2);
+  const items=[
+   ['warn',`The largest leak is at "${STAGES[worst.i+1]}"`,`Only ${pc(worst.rt)} of people move from "${STAGES[worst.i]}" to this stage, against a benchmark of ${pc(BENCH[worst.i],0)}. Closing that gap is worth about ${fR(worst.lostRev)} in revenue.`],
+   ['warn',`${over.n} produces leads, not revenue`,`${over.n} supplies ${pc(over.ls,0)} of leads but earns ${pc(over.rs,0)} of revenue under the data-driven model. Lead-to-deal rates are lowest for ${lowQ[0].n} (${pc(lowQ[0].r)}) and ${lowQ[1].n} (${pc(lowQ[1].r)}). Judging these channels on lead count hides the problem.`],
+   ['',`${top.n} gives the best return`,`Every ₹1 spent returns about ₹${top.roas.toFixed(1)} in credited revenue. Move budget from channels with a negative lead-versus-revenue gap toward this one and re-test after one quarter.`],
+   ['',`Last-touch reporting misleads`,`Last touch gives ${lastBias.n} about ${(lastBias.d*100).toFixed(1)} points more revenue share than the data-driven model. ${firstBias.n} is undervalued by first-touch reporting by ${(firstBias.d*100).toFixed(1)} points: it helps close deals that other channels started.`],
+   ['',`Recommended actions`,`Tighten lead scoring so sales only receives qualified leads. Add a follow-up time limit on marketing-qualified leads. Report channels on revenue per lead and cost per deal rather than lead volume.`]
+  ];
+  $('insights').innerHTML=items.map(x=>`<div class="ins ${x[0]}"><b>${x[1]}</b><p>${x[2]}</p></div>`).join('');
+}
+
+function renderJourneys(){
+  const ex=J.filter(j=>j.w&&j.t.length>=3).slice(0,6);
+  $('journeys').innerHTML=ex.map(j=>{
+    const w=weights(j,model);
+    return `<div class="j">${j.t.map((c,i)=>`<div class="t"><small>Day −${Math.round(j.days[i])}</small><br>${CH[c].n}<em>${Math.round(w[i]*100)}%</em></div>`).join('')}<div class="jv">${fR(j.val)}</div></div>`}).join('');
+}
+
+$('chSel').innerHTML='<option value="-1">All channels</option>'+CH.map((c,i)=>`<option value="${i}">${c.n}</option>`).join('');
+$('chSel').onchange=renderFunnel;
+renderKpis();renderFunnel();renderModels();renderTable();renderInsights();renderJourneys();
+</script>
+</body>
+</html>
